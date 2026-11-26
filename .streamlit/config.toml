@@ -1,0 +1,19 @@
+[theme]
+baseRadius = "8px"
+showWidgetBorder = true
+
+[theme.light]
+primaryColor = "#29B5E8"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4FBFF"
+textColor = "#0F2A3D"
+borderColor = "#D6ECF7"
+chartCategoricalColors = ["#29B5E8", "#11567F", "#F5A623"]
+
+[theme.dark]
+primaryColor = "#29B5E8"
+backgroundColor = "#07131F"
+secondaryBackgroundColor = "#0E2233"
+textColor = "#E6F4FB"
+borderColor = "#1E3A52"
+chartCategoricalColors = ["#29B5E8", "#7DD3FC", "#F5A623"]
