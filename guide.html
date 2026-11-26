@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reach × Snowflake · Workshop Guide</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --ice: #29b5e8; --ice-2: #7dd3fc; --deep: #11567f; --gold: #f5a623; --red: #ef4444; --green: #22c55e; --black: #0f172a;
+    --bg: light-dark(#f4fbff, #07131f);
+    --card: light-dark(#ffffff, #0e2233);
+    --line: light-dark(#d6ecf7, #1e3a52);
+    --ink: light-dark(#0f2a3d, #e6f4fb);
+    --muted: light-dark(#5b7a8e, #8fb3c8);
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body { margin: 0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif; color: var(--ink); line-height: 1.5; overflow-x: hidden; }
+  .wrap { max-width: 1040px; width: 100%; margin: 0 auto; padding: 0 clamp(14px, 4vw, 28px); }
+  a { color: light-dark(#0c6fa3, #7dd3fc); }
+  code { font: .86em ui-monospace, Menlo, monospace; background: light-dark(#e6f5fc, #13314a); padding: 1px 6px; border-radius: 5px; }
+  svg { max-width: 100%; height: auto; display: block; }
+  h2 { font-size: clamp(24px, 4vw, 32px); margin: 0 0 6px; letter-spacing: -.01em; display: flex; align-items: center; gap: 12px; }
+  h2 svg { width: 34px; height: 34px; flex: none; }
+  .kicker { color: var(--muted); margin: 0 0 22px; }
+  section { padding: 56px 0 8px; position: relative; z-index: 1; }
+
+  /* ---------- falling snow ---------- */
+  #snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  #snow i { position: absolute; top: -12px; border-radius: 50%; background: light-dark(#b9e3f7, #ffffff); opacity: .8; animation: fall linear infinite; }
+  @keyframes fall { to { transform: translate3d(var(--drift), 105vh, 0); } }
+  @media (prefers-reduced-motion: reduce) { #snow { display: none; } .spin { animation: none !important; } }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; z-index: 1; background: linear-gradient(180deg, #0b2a44 0%, #11567f 55%, #29b5e8 100%); color: #fff; overflow: hidden; }
+  .hero .wrap { padding-top: clamp(36px, 7vw, 70px); padding-bottom: 0; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .hero h1 { font-size: clamp(32px, 6.5vw, 60px); line-height: 1.04; margin: 14px 0 10px; letter-spacing: -.02em; }
+  .hero h1 span { background: linear-gradient(90deg, #fff, #bfe9fb); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { margin: 0; max-width: 620px; color: #d8f1fc; font-size: clamp(15px, 2.2vw, 18px); }
+  .spin { animation: spin 40s linear infinite; transform-origin: center; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hero .flake-big { position: absolute; right: -40px; top: 20px; width: clamp(160px, 28vw, 300px); opacity: .22; }
+  .mountains { margin-top: 28px; width: 100%; }
+
+  /* ---------- KPI ice cubes ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: -54px; position: relative; z-index: 2; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; box-shadow: 0 10px 30px light-dark(rgba(17,86,127,.12), rgba(0,0,0,.4)); display: flex; gap: 14px; align-items: center; }
+  .kpi svg { width: 44px; height: 44px; flex: none; }
+  .kpi b { display: block; font-size: 24px; line-height: 1.1; }
+  .kpi span { font-size: 13px; color: var(--muted); }
+
+  /* ---------- generic cards ---------- */
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; position: relative; }
+  .card h3 { margin: 8px 0 4px; font-size: 16px; overflow-wrap: anywhere; }
+  .card code { overflow-wrap: anywhere; }
+  .card p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  .card .ico { width: 46px; height: 46px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+  .t-raw { background: light-dark(#e0f2fe, #0c3350); color: light-dark(#0c4a6e, #bae6fd); }
+  .t-dev { background: light-dark(#dcfce7, #0f3a24); color: light-dark(#166534, #bbf7d0); }
+  .t-prod { background: light-dark(#fee2e2, #3f1515); color: light-dark(#991b1b, #fecaca); }
+  .t-todo { background: light-dark(#fef3c7, #3d2a07); color: light-dark(#92400e, #fde68a); }
+
+  /* ---------- trail map ---------- */
+  .trail { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 10px; overflow-x: auto; }
+  .trail svg { min-width: 760px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* ---------- map tiles (dataiku → snowflake) ---------- */
+  .swap { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px 12px; align-items: center; }
+  .swap .from, .swap .to { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+  .swap .to { border-color: var(--ice); font-weight: 600; }
+  .swap .arrow { color: var(--ice); font-weight: 800; }
+
+  /* ---------- tables (only where needed) ---------- */
+  .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); background: var(--card); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { background: light-dark(#e9f6fd, #102b40); font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: 0; }
+
+  /* ---------- receipts (payment samples) ---------- */
+  .receipts { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .receipt { background: var(--card); border: 1px dashed var(--line); border-radius: 14px; padding: 14px 16px; font: 12.5px/1.6 ui-monospace, Menlo, monospace; position: relative; }
+  .receipt .amt { font: 700 22px/1.2 -apple-system, system-ui, sans-serif; margin: 4px 0 6px; }
+  .receipt .row { display: flex; justify-content: space-between; gap: 8px; }
+  .receipt .row span:first-child { color: var(--muted); }
+  .receipt.bad { border: 2px solid var(--red); background: light-dark(#fff5f5, #2a1010); }
+  .stamp { position: absolute; top: -11px; right: 12px; transform: rotate(6deg); background: var(--card); border: 2px solid var(--red); color: var(--red); font: 800 11px/1 -apple-system, system-ui, sans-serif; padding: 4px 7px; border-radius: 6px; letter-spacing: .06em; }
+  .stamp.ok { border-color: var(--green); color: var(--green); }
+
+  /* ---------- anomaly types ---------- */
+  .anoms .card { text-align: center; }
+  .anoms .card svg { margin: 0 auto; width: 64px; height: 64px; }
+
+  /* ---------- bars ---------- */
+  .bars { display: grid; gap: 10px; }
+  .bar { display: grid; grid-template-columns: minmax(120px, 230px) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+  .bar .track { height: 14px; background: light-dark(#e6f5fc, #13314a); border-radius: 999px; overflow: hidden; }
+  .bar .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--ice-2), var(--ice)); }
+  .bar .fill.dev { background: linear-gradient(90deg, #86efac, var(--green)); }
+  .bar b { font-variant-numeric: tabular-nums; }
+  @media (max-width: 560px) { .bar { grid-template-columns: 1fr auto; } .bar .track { grid-column: 1 / -1; order: 3; } }
+
+  /* ---------- chart card ---------- */
+  .chart-card { position: relative; margin-top: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 16px 14px; }
+  .chart-card-tools { position: absolute; top: -13px; right: 14px; z-index: 2; display: flex; gap: 2px; align-items: center; height: 26px; padding: 0 6px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  .chart-card-tools button { padding: 4px 9px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .chart-card-tools button.active { color: var(--ink); border-bottom-color: var(--ice); }
+  .chart-card-tools button:focus-visible { outline: 2px solid var(--ice); outline-offset: 1px; }
+  .cc-panel { display: none; height: 300px; overflow: auto; }
+  .cc-panel.active { display: block; }
+  .chart-box { position: relative; width: 100%; height: 100%; }
+  .chart-box > canvas { width: 100% !important; height: 100% !important; }
+  .cc-info p { margin: 0 0 10px; font-size: 14px; }
+
+  /* ---------- checklist ---------- */
+  .checks { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+  .check { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 14px; }
+  .check svg { width: 26px; height: 26px; flex: none; }
+
+  /* ---------- link chips ---------- */
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); text-decoration: none; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .chip svg { width: 16px; height: 16px; }
+
+  footer { text-align: center; padding: 50px 0 70px; color: var(--muted); font-size: 13px; position: relative; z-index: 1; }
+  footer svg { width: 40px; margin: 0 auto 8px; }
+  /* ---------- journey timeline ---------- */
+  .journey { position: relative; margin: 10px 0 0; padding-left: 0; list-style: none; }
+  .journey::before { content: ""; position: absolute; left: 39px; top: 10px; bottom: 10px; width: 6px; border-radius: 3px;
+    background: linear-gradient(180deg, var(--ice-2), var(--ice) 45%, var(--green) 70%, var(--red)); }
+  .step { position: relative; display: grid; grid-template-columns: 84px 1fr; gap: 16px; margin: 0 0 18px; }
+  .step .node { width: 84px; height: 84px; border-radius: 50%; background: var(--card); border: 4px solid var(--ice); display: grid; place-items: center; position: relative; z-index: 1; box-shadow: 0 6px 18px light-dark(rgba(17,86,127,.15), rgba(0,0,0,.4)); }
+  .step .node svg { width: 46px; height: 46px; }
+  .step .num { position: absolute; top: -6px; right: -6px; width: 26px; height: 26px; border-radius: 50%; background: var(--deep); color: #fff; font-weight: 800; font-size: 13px; display: grid; place-items: center; }
+  .step .body { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .step .body h3 { margin: 0 0 4px; font-size: 17px; }
+  .step .body p { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+  .step .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .step .meta span { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: light-dark(#eef8fd, #13314a); border: 1px solid var(--line); }
+  .step .meta b { color: var(--deep); }
+  .step.dev .node { border-color: var(--green); } .step.prod .node { border-color: var(--red); } .step.git .node { border-color: #0f172a; }
+  .phase { display: inline-block; margin: 8px 0 14px 100px; font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  @media (max-width: 560px) {
+    .journey::before { left: 27px; } .step { grid-template-columns: 60px 1fr; gap: 10px; }
+    .step .node { width: 60px; height: 60px; } .step .node svg { width: 32px; height: 32px; } .phase { margin-left: 70px; }
+  }
+
+  /* ---------- one payment's journey ---------- */
+  .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0; align-items: stretch; }
+  .flow .hop { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin: 8px; font-size: 13px; }
+  .flow .hop h4 { margin: 0 0 8px; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .flow .hop .big { font-size: 22px; font-weight: 800; }
+  .flow .hop .kv { display: flex; justify-content: space-between; gap: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  .flow .hop .kv b.hot { color: var(--red); }
+  .gauge { height: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--green), var(--gold), var(--red)); position: relative; margin: 10px 0 4px; }
+  .gauge i { position: absolute; top: -5px; width: 4px; height: 20px; border-radius: 2px; background: var(--ink); }
+  /* ---------- snow toggle ---------- */
+  .snow-toggle { position: absolute; right: 16px; top: 16px; z-index: 5; display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 4px 14px rgba(0,0,0,.18); font-size: 12px; }
+  .snow-toggle button { border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600; padding: 5px 11px; border-radius: 999px; cursor: pointer; }
+  .snow-toggle button[aria-pressed="true"] { background: var(--ice); color: #fff; }
+  .snow-toggle button:focus-visible { outline: 2px solid var(--ice); outline-offset: 1px; }
+  @media print { .snow-toggle, #snow { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- reusable icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="flake" viewBox="0 0 100 100">
+      <g stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none">
+        <g id="arm"><line x1="50" y1="50" x2="50" y2="6"/><line x1="50" y1="22" x2="38" y2="12"/><line x1="50" y1="22" x2="62" y2="12"/><line x1="50" y1="36" x2="41" y2="28"/><line x1="50" y1="36" x2="59" y2="28"/></g>
+        <use href="#arm" transform="rotate(60 50 50)"/><use href="#arm" transform="rotate(120 50 50)"/>
+        <use href="#arm" transform="rotate(180 50 50)"/><use href="#arm" transform="rotate(240 50 50)"/><use href="#arm" transform="rotate(300 50 50)"/>
+      </g>
+    </symbol>
+    <symbol id="db" viewBox="0 0 48 48">
+      <ellipse cx="24" cy="11" rx="16" ry="6" fill="currentColor" opacity=".35"/>
+      <path d="M8 11v26c0 3.3 7.2 6 16 6s16-2.7 16-6V11" fill="currentColor" opacity=".18" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M8 20c0 3.3 7.2 6 16 6s16-2.7 16-6M8 29c0 3.3 7.2 6 16 6s16-2.7 16-6" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <ellipse cx="24" cy="11" rx="16" ry="6" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    </symbol>
+    <symbol id="check" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#22c55e"/><path d="M7.5 13.5l3.5 3.5 7.5-8" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="todo" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="none" stroke="#f5a623" stroke-width="2.4" stroke-dasharray="4 3"/><use href="#flake" x="7" y="7" width="12" height="12" style="color:#f5a623"/></symbol>
+    <symbol id="link" viewBox="0 0 16 16"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 013.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 01-3.7-3.7L5.3 7.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div id="snow" aria-hidden="true"></div>
+<div class="snow-toggle" role="group" aria-label="Snow amount">
+  <button type="button" data-snow="0">Off</button>
+  <button type="button" data-snow="35">Light</button>
+  <button type="button" data-snow="140">Heavy</button>
+</div>
+
+<!-- ======================================================== HERO -->
+<header class="hero">
+  <svg class="flake-big spin" style="color:#fff" aria-hidden="true"><use href="#flake"/></svg>
+  <div class="wrap">
+    <span class="badge"><svg width="14" height="14" style="color:#fff"><use href="#flake"/></svg> Tue Dec 1, 2026 · 9:00–12:00 MT · Reach</span>
+    <h1><span>Data to production</span><br/>Payments anomaly pipeline</h1>
+    <p>Explore → model → schedule → Git → CI/CD. One pipeline, DEV to PROD.</p>
+  </div>
+  <svg class="mountains" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 220 L0 150 L120 70 L210 130 L330 30 L450 140 L560 60 L680 150 L800 40 L930 130 L1040 70 L1200 150 L1200 220 Z" fill="#cfeefc" opacity=".55"/>
+    <path d="M330 30 L370 66 L350 62 L330 78 L312 60 L292 64 Z M800 40 L842 78 L820 72 L800 88 L780 70 L760 76 Z" fill="#fff"/>
+    <path d="M0 220 L0 175 L160 110 L290 170 L420 95 L560 180 L700 105 L860 175 L1000 115 L1200 185 L1200 220 Z" style="fill: var(--bg)"/>
+  </svg>
+</header>
+
+<div class="wrap">
+  <div class="kpis">
+    <div class="kpi"><svg style="color:var(--ice)"><use href="#flake"/></svg><div><b>1,004,500</b><span>synthetic payments · 90 days</span></div></div>
+    <div class="kpi">
+      <svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="none" stroke="var(--ice)" stroke-width="3"/><path d="M3 22h38M22 3c6 6 6 32 0 38M22 3c-6 6-6 32 0 38" fill="none" stroke="var(--ice)" stroke-width="2.4"/></svg>
+      <div><b>12 currencies</b><span>with daily FX to USD</span></div></div>
+    <div class="kpi">
+      <svg viewBox="0 0 44 44"><line x1="2" y1="10" x2="42" y2="34" stroke="var(--muted)" stroke-width="2"/><rect x="10" y="13" width="9" height="11" rx="2" fill="var(--ice)"/><rect x="25" y="22" width="9" height="11" rx="2" fill="var(--ice)"/></svg>
+      <div><b>~20 s</b><span>full task graph, 3 tasks</span></div></div>
+    <div class="kpi">
+      <svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--line)" stroke-width="6"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--green)" stroke-width="6" stroke-dasharray="110.8 113" transform="rotate(-90 22 22)" stroke-linecap="round"/></svg>
+      <div><b>98% precision</b><span>at 0.5% flagged</span></div></div>
+  </div>
+</div>
+
+<main class="wrap">
+
+<!-- ======================================================== WHOLE JOURNEY -->
+<section id="journey">
+  <h2><svg viewBox="0 0 34 34"><path d="M4 4 C 30 6, 4 16, 28 18 S 8 28, 30 30" fill="none" stroke="var(--ice)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 6"/><circle cx="4" cy="4" r="3.5" fill="var(--green)"/><circle cx="30" cy="30" r="3.5" fill="var(--red)"/></svg>End-to-end flow</h2>
+  <p class="kicker">Blue: explore · Green: DEV · Black: Git · Red: PROD</p>
+
+  <ol class="journey">
+    <li><span class="phase">Data</span></li>
+    <li class="step">
+      <div class="node"><span class="num">1</span><svg style="color:#11567f"><use href="#db"/></svg></div>
+      <div class="body"><h3>Payments land in REACH_RAW</h3><p>Production: Fivetran / dbt. Demo: generated by script.</p>
+        <div class="meta"><span><b>Where</b> REACH_RAW.PAYMENTS</span><span><b>Who</b> data engineering</span><span><b>File</b> setup/01_generate_data.sql</span></div></div>
+    </li>
+    <li class="step">
+      <div class="node"><span class="num">2</span><svg viewBox="0 0 46 46"><circle cx="20" cy="20" r="11" fill="none" stroke="var(--ice)" stroke-width="4"/><line x1="28" y1="28" x2="40" y2="40" stroke="var(--deep)" stroke-width="5" stroke-linecap="round"/><path d="M14 22l4-5 3 3 4-6" stroke="var(--ice)" stroke-width="2.5" fill="none"/></svg></div>
+      <div class="body"><h3>Explore in a Workspaces notebook</h3><p>Snowpark profiling. Compute stays in Snowflake.</p>
+        <div class="meta"><span><b>Where</b> Notebook in Workspaces</span><span><b>Role</b> REACH_DS_DEVELOPER</span><span><b>File</b> notebooks/01_explore_and_experiment.ipynb</span></div></div>
+    </li>
+    <li class="step">
+      <div class="node"><span class="num">3</span><svg viewBox="0 0 46 46"><rect x="6" y="28" width="7" height="12" rx="2" fill="var(--ice-2)"/><rect x="16" y="20" width="7" height="20" rx="2" fill="var(--ice)"/><rect x="26" y="12" width="7" height="28" rx="2" fill="var(--deep)"/><rect x="36" y="24" width="5" height="16" rx="2" fill="var(--red)"/></svg></div>
+      <div class="body"><h3>Engineer 4 features in SQL</h3><p>Amount vs merchant median · card-country mismatch · 30-min velocity · daily declines.</p>
+        <div class="meta"><span><b>Output</b> PAYMENT_FEATURES · 334,850 rows</span></div></div>
+    </li>
+    <li class="step">
+      <div class="node"><span class="num">4</span><svg viewBox="0 0 46 46"><path d="M23 4 L34 20 H28 L37 32 H27 V42 H19 V32 H9 L18 20 H12 Z" fill="var(--green)"/></svg></div>
+      <div class="body"><h3>Experiment with a Python model</h3><p>scikit-learn Isolation Forest. Contamination sets precision vs recall.</p>
+        <div class="meta"><span><b>0.5%</b> 98% precision / 50% recall</span><span><b>1% (default)</b> 67% / 69%</span></div></div>
+    </li>
+
+    <li><span class="phase">DEV</span></li>
+    <li class="step dev">
+      <div class="node"><span class="num">5</span><svg viewBox="0 0 46 46"><rect x="6" y="8" width="34" height="30" rx="5" fill="none" stroke="var(--green)" stroke-width="3.5"/><path d="M13 18l5 5-5 5M22 28h10" stroke="var(--green)" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="body"><h3>Notebook code → procedures</h3><p>Feature SQL → <code>BUILD_FEATURES</code>. Model cell → Python <code>SCORE_PAYMENTS</code>.</p>
+        <div class="meta"><span><b>Where</b> REACH_DS_DEV.PAYMENTS_ANOMALY</span><span><b>File</b> pipeline/deploy.sql</span></div></div>
+    </li>
+    <li class="step dev">
+      <div class="node"><span class="num">6</span><svg viewBox="0 0 46 46"><line x1="2" y1="10" x2="44" y2="4" stroke="var(--muted)" stroke-width="2.5"/><g fill="var(--green)"><rect x="6" y="14" width="10" height="9" rx="2"/><rect x="18" y="22" width="10" height="9" rx="2"/><rect x="30" y="30" width="10" height="9" rx="2"/></g><path d="M16 19h3M28 27h3" stroke="var(--green)" stroke-width="2"/></svg></div>
+      <div class="body"><h3>Schedule as a task graph</h3><p>features → score → summary. Daily 06:00 MT. Manual: <code>EXECUTE TASK … AWAIT</code>.</p>
+        <div class="meta"><span><b>Run time</b> 3 s + 14 s + 2 s</span><span><b>Output</b> PAYMENT_ANOMALY_SCORES, MERCHANT_DAILY_RISK</span></div></div>
+    </li>
+
+    <li><span class="phase">Git</span></li>
+    <li class="step git">
+      <div class="node"><span class="num">7</span><svg viewBox="0 0 46 46"><circle cx="14" cy="10" r="5" fill="#0f172a"/><circle cx="14" cy="36" r="5" fill="#0f172a"/><circle cx="32" cy="16" r="5" fill="var(--ice)"/><path d="M14 15v16M32 21c0 8-18 6-18 10" stroke="#0f172a" stroke-width="3" fill="none"/></svg></div>
+      <div class="body"><h3>Branch, commit, push from Workspaces</h3><p>Edit on a branch · Changes tab · Push · open a PR.</p>
+        <div class="meta"><span><b>Where</b> Git workspace REACH_GIT</span><span><b>Integration</b> REACH_GITHUB_INTEGRATION</span></div></div>
+    </li>
+    <li class="step dev">
+      <div class="node"><span class="num">8</span><svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="17" fill="var(--green)"/><path d="M15 23l6 6 11-12" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="body"><h3>CI validates in DEV</h3><p>OIDC login → deploy → run graph → check outputs. Failure blocks the PR.</p>
+        <div class="meta"><span><b>Job</b> validate-in-dev</span><span><b>Identity</b> GH_REACH_WORKSHOP_DEV</span><span><b>Verified</b> PR #1, #2</span></div></div>
+    </li>
+
+    <li><span class="phase">PROD</span></li>
+    <li class="step prod">
+      <div class="node"><span class="num">9</span><svg viewBox="0 0 46 46"><path d="M23 4c10 8 12 22 4 32h-8c-8-10-6-24 4-32z" fill="var(--red)"/><circle cx="23" cy="18" r="4" fill="#fff"/><path d="M17 36l-5 7M29 36l5 7" stroke="var(--gold)" stroke-width="4" stroke-linecap="round"/></svg></div>
+      <div class="body"><h3>Merge → deploy PROD</h3><p>Same file, <code>-D db=REACH_DS_PROD</code>. Deployer role is the only PROD writer.</p>
+        <div class="meta"><span><b>Job</b> deploy-prod</span><span><b>Role</b> REACH_DS_DEPLOYER</span><span><b>Optional</b> required reviewer</span></div></div>
+    </li>
+    <li class="step prod">
+      <div class="node"><span class="num">10</span><svg viewBox="0 0 46 46"><circle cx="23" cy="20" r="9" fill="var(--gold)"/><g stroke="var(--gold)" stroke-width="3" stroke-linecap="round"><line x1="23" y1="3" x2="23" y2="7"/><line x1="8" y1="20" x2="4" y2="20"/><line x1="38" y1="20" x2="42" y2="20"/><line x1="12" y1="9" x2="9" y2="6"/><line x1="34" y1="9" x2="37" y2="6"/></g><path d="M2 42 L14 30 L22 36 L32 26 L44 42 Z" fill="var(--ice)"/></svg></div>
+      <div class="body"><h3>Daily scores in PROD</h3><p>Graph runs 06:00 MT. Consumers query PROD tables.</p>
+        <div class="meta"><span><b>Read by</b> REACH_DS_DEVELOPER, business users</span><span><b>Watch it</b> Snowsight › Transformation › Tasks</span></div></div>
+    </li>
+  </ol>
+
+  <h3 style="margin-top:34px">Trace: payment #1004379</h3>
+  <p class="kicker" style="margin-bottom:6px">One DEV row, step by step.</p>
+  <div class="flow">
+    <div class="hop"><h4>1 · lands in RAW</h4><div class="big">$169.15</div><div class="kv"><span>merchant</span><b>1024</b></div><div class="kv"><span>when</span><b>Nov 8 14:32</b></div><div class="kv"><span>method</span><b>CARD</b></div></div>
+    <div class="hop"><h4>3 · gets features</h4><div class="kv"><span>amount vs usual</span><b>0.35</b></div><div class="kv"><span>card mismatch</span><b>0</b></div><div class="kv"><span>txns / 30 min</span><b class="hot">15</b></div><div class="kv"><span>declines today</span><b class="hot">8</b></div></div>
+    <div class="hop"><h4>4 · gets scored</h4><div class="big" style="color:var(--red)">0.838</div><div class="gauge"><i style="left:96%"></i></div><div class="kv"><span>rank</span><b>tied #1 of 334,850</b></div></div>
+    <div class="hop"><h4>6 · flagged</h4><div class="big" style="color:var(--red)">FLAGGED</div><div class="kv"><span>planted?</span><b>yes, velocity burst</b></div><div class="kv"><span>rolls into</span><b>MERCHANT_DAILY_RISK</b></div></div>
+  </div>
+  <p class="kicker" style="margin-top:10px">Normal amount and card. 15 payments in 30 min, 8 declines: card testing.</p>
+</section>
+
+<!-- ======================================================== ARCHITECTURE -->
+<section id="architecture">
+  <h2><svg style="color:var(--ice)"><use href="#flake"/></svg>Architecture</h2>
+  <p class="kicker">RAW: shared, read-only. DEV: development. PROD: CI writes only.</p>
+  <div class="card" style="overflow-x:auto">
+    <svg viewBox="0 0 960 330" style="min-width:560px;width:100%" role="img" aria-label="Architecture: REACH_RAW feeds DEV and PROD; GitHub validates in DEV and deploys to PROD">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#29b5e8"/></marker>
+      </defs>
+      <!-- RAW -->
+      <g transform="translate(30 70)">
+        <rect width="230" height="190" rx="22" fill="#e0f2fe" stroke="#29b5e8" stroke-width="2"/>
+        <use href="#db" x="18" y="16" width="44" height="44" style="color:#11567f"/>
+        <text x="72" y="38" font-weight="800" font-size="16" fill="#0c4a6e">REACH_RAW</text>
+        <text x="72" y="56" font-size="12" fill="#2f5d77">.PAYMENTS · source</text>
+        <g font-size="12.5" fill="#0f2a3d" font-family="ui-monospace, Menlo, monospace">
+          <text x="22" y="92">PAYMENTS   1.0M</text><text x="22" y="112">SHOPPERS   150k</text><text x="22" y="132">MERCHANTS  2,000</text><text x="22" y="152">FX_RATES   1,440</text><text x="22" y="172">CURRENCIES 12</text>
+        </g>
+      </g>
+      <!-- DEV -->
+      <g transform="translate(360 20)">
+        <rect width="250" height="130" rx="22" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+        <use href="#db" x="16" y="14" width="40" height="40" style="color:#166534"/>
+        <text x="64" y="36" font-weight="800" font-size="16" fill="#14532d">REACH_DS_DEV</text>
+        <text x="64" y="54" font-size="12" fill="#166534">.PAYMENTS_ANOMALY</text>
+        <g transform="translate(22 78)">
+          <rect width="60" height="30" rx="8" fill="#fff" stroke="#22c55e"/><text x="30" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#14532d">features</text>
+          <line x1="62" y1="15" x2="80" y2="15" stroke="#22c55e" stroke-width="2" marker-end="url(#ar)"/>
+          <rect x="82" width="60" height="30" rx="8" fill="#fff" stroke="#22c55e"/><text x="112" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#14532d">score</text>
+          <line x1="144" y1="15" x2="162" y2="15" stroke="#22c55e" stroke-width="2" marker-end="url(#ar)"/>
+          <rect x="164" width="60" height="30" rx="8" fill="#fff" stroke="#22c55e"/><text x="194" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#14532d">summary</text>
+        </g>
+      </g>
+      <!-- PROD -->
+      <g transform="translate(360 180)">
+        <rect width="250" height="130" rx="22" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
+        <use href="#db" x="16" y="14" width="40" height="40" style="color:#991b1b"/>
+        <text x="64" y="36" font-weight="800" font-size="16" fill="#7f1d1d">REACH_DS_PROD</text>
+        <text x="64" y="54" font-size="12" fill="#991b1b">same graph · CI writes only</text>
+        <text x="22" y="98" font-size="12.5" fill="#7f1d1d">Deployed on merge · runs 06:00 MT</text>
+      </g>
+      <!-- GitHub -->
+      <g transform="translate(720 115)">
+        <circle cx="85" cy="50" r="50" fill="#0f172a"/>
+        <path d="M85 20c-17 0-30 13-30 30 0 13 8.5 24 20.5 28 1.5.3 2-.7 2-1.5v-5.5c-8.4 1.8-10.2-3.6-10.2-3.6-1.4-3.5-3.3-4.4-3.3-4.4-2.7-1.9.2-1.8.2-1.8 3 .2 4.6 3.1 4.6 3.1 2.7 4.6 7 3.3 8.7 2.5.3-1.9 1.1-3.3 1.9-4-6.7-.8-13.7-3.3-13.7-14.8 0-3.3 1.2-6 3.1-8.1-.3-.8-1.3-3.8.3-8 0 0 2.5-.8 8.3 3.1a28.7 28.7 0 0115 0c5.7-3.9 8.3-3.1 8.3-3.1 1.6 4.2.6 7.2.3 8 1.9 2.1 3.1 4.8 3.1 8.1 0 11.5-7 14-13.7 14.8 1.1.9 2 2.8 2 5.6v8.3c0 .8.5 1.8 2.1 1.5A30 30 0 0085 20z" fill="#fff"/>
+        <text x="85" y="128" text-anchor="middle" font-weight="800" font-size="15" fill="#29b5e8">GitHub repo</text>
+      </g>
+      <!-- arrows -->
+      <path d="M262 140 C 310 140, 310 90, 356 88" fill="none" stroke="#29b5e8" stroke-width="3" marker-end="url(#ar)"/>
+      <path d="M262 190 C 310 190, 310 245, 356 245" fill="none" stroke="#29b5e8" stroke-width="3" marker-end="url(#ar)"/>
+      <text x="270" y="122" font-size="12" font-weight="700" fill="#11567f">read-only</text>
+      <path d="M735 140 C 690 120, 660 90, 614 88" fill="none" stroke="#29b5e8" stroke-width="3" stroke-dasharray="7 6" marker-end="url(#ar)"/>
+      <path d="M735 200 C 690 220, 660 245, 614 245" fill="none" stroke="#29b5e8" stroke-width="3" marker-end="url(#ar)"/>
+      <text x="640" y="72" font-size="12" font-weight="700" fill="#166534">PR: validate</text>
+      <text x="640" y="276" font-size="12" font-weight="700" fill="#991b1b">merge: deploy</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ======================================================== OBJECTS -->
+<section id="objects">
+  <h2><svg viewBox="0 0 34 34"><rect x="4" y="10" width="26" height="18" rx="3" fill="var(--ice)"/><path d="M2 12 L17 3 L32 12" fill="none" stroke="var(--deep)" stroke-width="3" stroke-linejoin="round"/><rect x="14" y="18" width="6" height="10" fill="#fff"/></svg>Objects</h2>
+  <p class="kicker">Snowflake demo account</p>
+  <div class="grid">
+    <div class="card">
+      <svg class="ico" viewBox="0 0 46 46"><rect x="5" y="9" width="36" height="28" rx="5" fill="none" stroke="var(--ice)" stroke-width="3"/><path d="M5 16h36" stroke="var(--ice)" stroke-width="3"/><circle cx="10" cy="12.5" r="1.5" fill="var(--ice)"/><circle cx="15" cy="12.5" r="1.5" fill="var(--ice)"/><path d="M13 25l4 3-4 3M21 31h9" stroke="var(--deep)" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+      <h3>Workspaces</h3><p><code>REACH</code>: all files<br/><code>REACH_GIT</code>: Git-synced to the repo</p>
+    </div>
+    <div class="card">
+      <svg class="ico" viewBox="0 0 46 46"><rect x="8" y="14" width="30" height="24" rx="3" fill="var(--ice)" opacity=".25" stroke="var(--ice)" stroke-width="2.5"/><path d="M14 14v-4h18v4" stroke="var(--ice)" stroke-width="2.5" fill="none"/><path d="M18 22l-3 5h6l-3 5" stroke="var(--gold)" stroke-width="2.6" fill="none" stroke-linejoin="round"/><circle cx="29" cy="27" r="3" fill="var(--deep)"/></svg>
+      <h3>Warehouse</h3><p><code>REACH_WORKSHOP_WH</code><br/>X-Small · auto-suspend 60 s</p>
+    </div>
+    <div class="card"><svg class="ico" style="color:#11567f"><use href="#db"/></svg><span class="tag t-raw">source</span><h3>REACH_RAW</h3><p><code>PAYMENTS</code> · read-only for DS</p></div>
+    <div class="card"><svg class="ico" style="color:#16a34a"><use href="#db"/></svg><span class="tag t-dev">dev</span><h3>REACH_DS_DEV</h3><p><code>COMMON</code> + <code>PAYMENTS_ANOMALY</code> · managed access</p></div>
+    <div class="card"><svg class="ico" style="color:#dc2626"><use href="#db"/></svg><span class="tag t-prod">prod</span><h3>REACH_DS_PROD</h3><p>Same layout · CI/CD writes only</p></div>
+    <div class="card"><svg class="ico" viewBox="0 0 46 46"><circle cx="14" cy="10" r="5" fill="#0f172a"/><circle cx="14" cy="36" r="5" fill="#0f172a"/><circle cx="32" cy="16" r="5" fill="var(--ice)"/><path d="M14 15v16M32 21c0 8-18 6-18 10" stroke="#0f172a" stroke-width="3" fill="none"/></svg><span class="tag t-raw">integration</span><h3>REACH_GITHUB_INTEGRATION</h3><p>Snowflake GitHub App · scoped to the repo</p></div>
+    <div class="card"><svg class="ico" viewBox="0 0 46 46"><path d="M23 4l15 6v11c0 10-7 17-15 21C15 38 8 31 8 21V10z" fill="var(--ice)" opacity=".25" stroke="var(--ice)" stroke-width="3"/><path d="M16 23l5 5 9-10" stroke="var(--deep)" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg><span class="tag t-raw">network</span><h3>GH_ACTIONS_POLICY</h3><p>GitHub runner IPs · 2 service users only</p></div>
+  </div>
+
+  <h3 style="margin-top:32px">Rows per table · Nov 23</h3>
+  <div class="card bars">
+    <div class="bar"><span><code>RAW.PAYMENTS</code></span><div class="track"><div class="fill" style="width:100%"></div></div><b>1,004,500</b></div>
+    <div class="bar"><span><code>DEV.PAYMENT_FEATURES</code></span><div class="track"><div class="fill dev" style="width:33.3%"></div></div><b>334,850</b></div>
+    <div class="bar"><span><code>DEV.PAYMENT_ANOMALY_SCORES</code></span><div class="track"><div class="fill dev" style="width:33.3%"></div></div><b>334,850</b></div>
+    <div class="bar"><span><code>RAW.SHOPPERS</code></span><div class="track"><div class="fill" style="width:14.9%"></div></div><b>150,000</b></div>
+    <div class="bar"><span><code>DEV.MERCHANT_DAILY_RISK</code></span><div class="track"><div class="fill dev" style="width:6.1%"></div></div><b>61,465</b></div>
+    <div class="bar"><span><code>RAW.MERCHANTS</code></span><div class="track"><div class="fill" style="width:1%"></div></div><b>2,000</b></div>
+    <div class="bar"><span><code>RAW.FX_RATES</code></span><div class="track"><div class="fill" style="width:.8%"></div></div><b>1,440</b></div>
+    <div class="bar"><span><code>RAW.CURRENCIES</code></span><div class="track"><div class="fill" style="width:.5%"></div></div><b>12</b></div>
+  </div>
+</section>
+
+<!-- ======================================================== ROLES -->
+<section id="roles">
+  <h2><svg viewBox="0 0 34 34"><rect x="6" y="14" width="22" height="16" rx="3" fill="var(--ice)"/><path d="M11 14v-4a6 6 0 0112 0v4" fill="none" stroke="var(--deep)" stroke-width="3"/><circle cx="17" cy="21" r="2.4" fill="#fff"/></svg>Roles</h2>
+  <p class="kicker">Both roll up to SYSADMIN.</p>
+  <div class="grid">
+    <div class="card" style="border-top:6px solid var(--green)">
+      <svg class="ico" viewBox="0 0 46 46"><circle cx="23" cy="15" r="8" fill="var(--green)"/><path d="M8 42c0-9 7-14 15-14s15 5 15 14" fill="var(--green)" opacity=".6"/></svg>
+      <h3>REACH_DS_DEVELOPER</h3><p>Read RAW · build in DEV · read PROD</p>
+    </div>
+    <div class="card" style="border-top:6px solid var(--red)">
+      <svg class="ico" viewBox="0 0 46 46"><rect x="7" y="10" width="32" height="26" rx="5" fill="var(--red)" opacity=".85"/><circle cx="17" cy="22" r="3" fill="#fff"/><circle cx="29" cy="22" r="3" fill="#fff"/><rect x="18" y="29" width="10" height="3" rx="1.5" fill="#fff"/><line x1="23" y1="4" x2="23" y2="10" stroke="var(--red)" stroke-width="3"/></svg>
+      <h3>REACH_DS_DEPLOYER</h3><p>CI/CD only · sole PROD writer</p>
+    </div>
+    <div class="card" style="border-top:6px dashed var(--gold)">
+      <svg class="ico" viewBox="0 0 46 46"><circle cx="23" cy="23" r="17" fill="#0f172a"/><path d="M23 11a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.5-4-1.5-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0023 11z" fill="#fff"/></svg>
+      <span class="tag t-dev">live</span><h3>GH_REACH_WORKSHOP_DEV / _PROD</h3><p>Service users · OIDC · no stored secrets</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== SKI LIFT -->
+<section id="lift">
+  <h2><svg viewBox="0 0 34 34"><line x1="1" y1="6" x2="33" y2="14" stroke="var(--muted)" stroke-width="2"/><line x1="17" y1="10" x2="17" y2="17" stroke="var(--muted)" stroke-width="2"/><rect x="10" y="17" width="14" height="12" rx="3" fill="var(--red)"/></svg>Task graph</h2>
+  <p class="kicker">DEV and PROD <code>PAYMENTS_ANOMALY</code> · daily 06:00 MT · ~20 s end to end</p>
+  <div class="card" style="overflow-x:auto">
+    <svg viewBox="0 0 960 260" style="min-width:560px;width:100%" role="img" aria-label="Task graph: T_BUILD_FEATURES, T_SCORE_PAYMENTS, T_MERCHANT_RISK_SUMMARY">
+      <path d="M0 260 L0 230 L960 120 L960 260 Z" fill="#e0f4fd" opacity=".6"/>
+      <line x1="20" y1="70" x2="940" y2="20" stroke="#475569" stroke-width="3"/>
+      <g font-family="-apple-system, system-ui, sans-serif">
+        <!-- tower -->
+        <g><line x1="40" y1="70" x2="40" y2="240" stroke="#64748b" stroke-width="6"/><rect x="22" y="62" width="36" height="8" fill="#64748b"/></g>
+        <g><line x1="920" y1="22" x2="920" y2="130" stroke="#64748b" stroke-width="6"/><rect x="902" y="14" width="36" height="8" fill="#64748b"/></g>
+        <!-- chair 1 -->
+        <g transform="translate(180 62)"><line x1="0" y1="0" x2="0" y2="40" stroke="#475569" stroke-width="3"/>
+          <rect x="-95" y="40" width="190" height="96" rx="16" fill="#29b5e8"/><text x="0" y="68" text-anchor="middle" fill="#fff" font-weight="800" font-size="15">T_BUILD_FEATURES</text>
+          <text x="0" y="88" text-anchor="middle" fill="#e0f7ff" font-size="12">CALL BUILD_FEATURES(30)</text><text x="0" y="108" text-anchor="middle" fill="#fff" font-size="12">SQL · root · cron 06:00</text>
+          <rect x="-28" y="114" width="56" height="18" rx="9" fill="#fff"/><text x="0" y="127" text-anchor="middle" fill="#11567f" font-weight="800" font-size="12">3 s</text></g>
+        <!-- chair 2 -->
+        <g transform="translate(480 46)"><line x1="0" y1="0" x2="0" y2="40" stroke="#475569" stroke-width="3"/>
+          <rect x="-95" y="40" width="190" height="96" rx="16" fill="#11567f"/><text x="0" y="68" text-anchor="middle" fill="#fff" font-weight="800" font-size="15">T_SCORE_PAYMENTS</text>
+          <text x="0" y="88" text-anchor="middle" fill="#cdeefc" font-size="12">CALL SCORE_PAYMENTS(0.01)</text><text x="0" y="108" text-anchor="middle" fill="#fff" font-size="12">Python · Isolation Forest</text>
+          <rect x="-28" y="114" width="56" height="18" rx="9" fill="#fff"/><text x="0" y="127" text-anchor="middle" fill="#11567f" font-weight="800" font-size="12">14 s</text></g>
+        <!-- chair 3 -->
+        <g transform="translate(780 30)"><line x1="0" y1="0" x2="0" y2="40" stroke="#475569" stroke-width="3"/>
+          <rect x="-95" y="40" width="190" height="96" rx="16" fill="#0f172a"/><text x="0" y="68" text-anchor="middle" fill="#fff" font-weight="800" font-size="13.5">T_MERCHANT_RISK_SUMMARY</text>
+          <text x="0" y="88" text-anchor="middle" fill="#cbd5e1" font-size="12">→ MERCHANT_DAILY_RISK</text><text x="0" y="108" text-anchor="middle" fill="#fff" font-size="12">SQL · per merchant per day</text>
+          <rect x="-28" y="114" width="56" height="18" rx="9" fill="#fff"/><text x="0" y="127" text-anchor="middle" fill="#0f172a" font-weight="800" font-size="12">2 s</text></g>
+        <text x="40" y="256" font-size="12" fill="#11567f" font-weight="700">Input: REACH_RAW</text>
+        <text x="920" y="150" text-anchor="end" font-size="12" fill="#11567f" font-weight="700">Output: scored payments</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- ======================================================== SAMPLES -->
+<section id="samples">
+  <h2><svg viewBox="0 0 34 34"><path d="M6 30c3-6 6-10 6-16M14 30c2-5 4-9 4-15M24 30c-1-6-1-11 2-17" stroke="var(--ice)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>Data samples</h2>
+  <p class="kicker"><code>REACH_RAW.PAYMENTS.PAYMENTS</code> · synthetic · 0.94% planted anomalies</p>
+
+  <div class="receipts">
+    <div class="receipt"><span class="stamp ok">CLEAN</span>#596449 · merchant 1
+      <div class="amt">R$ 584.96</div>
+      <div class="row"><span>shopper / card</span><span>BR / BR</span></div><div class="row"><span>method</span><span>BNPL</span></div><div class="row"><span>status</span><span>CAPTURED</span></div><div class="row"><span>when</span><span>Nov 23 10:55</span></div></div>
+    <div class="receipt"><span class="stamp ok">CLEAN</span>#468345 · merchant 1
+      <div class="amt">C$ 149.33</div>
+      <div class="row"><span>shopper / card</span><span>CA / CA</span></div><div class="row"><span>method</span><span>BANK_TRANSFER</span></div><div class="row"><span>status</span><span>CAPTURED</span></div><div class="row"><span>when</span><span>Nov 17 23:54</span></div></div>
+    <div class="receipt bad"><span class="stamp">ANOMALY</span>#82730 · merchant 518
+      <div class="amt">₹ 1,321.31</div>
+      <div class="row"><span>shopper / card</span><span><b style="color:var(--red)">IN / VN</b></span></div><div class="row"><span>method</span><span>BANK_TRANSFER</span></div><div class="row"><span>status</span><span>CAPTURED</span></div><div class="row"><span>when</span><span>Sep 11 05:30</span></div></div>
+    <div class="receipt bad"><span class="stamp">ANOMALY</span>#1000001 · merchant 715
+      <div class="amt">CHF 46.50</div>
+      <div class="row"><span>shopper / card</span><span>CH / CH</span></div><div class="row"><span>method</span><span>CARD</span></div><div class="row"><span>status</span><span><b style="color:var(--red)">DECLINED</b></span></div><div class="row"><span>when</span><span>Sep 2 04:36 · burst</span></div></div>
+  </div>
+
+  <h3 style="margin-top:30px">Planted anomaly types</h3>
+  <div class="grid anoms">
+    <div class="card">
+      <svg viewBox="0 0 64 64"><rect x="8" y="40" width="10" height="16" rx="2" fill="var(--ice-2)"/><rect x="22" y="36" width="10" height="20" rx="2" fill="var(--ice-2)"/><rect x="36" y="8" width="12" height="48" rx="2" fill="var(--red)"/><path d="M42 2l-4 5h8z" fill="var(--red)"/></svg>
+      <h3>Outsized amount</h3><p>15–40× merchant's usual</p></div>
+    <div class="card">
+      <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="none" stroke="var(--ice)" stroke-width="3"/><path d="M10 32h44M32 10c8 8 8 36 0 44M32 10c-8 8-8 36 0 44" fill="none" stroke="var(--ice)" stroke-width="2.4"/><circle cx="46" cy="18" r="8" fill="var(--red)"/><path d="M46 13v6M46 22v1" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <h3>Foreign card</h3><p>Card country ≠ shopper country</p></div>
+    <div class="card">
+      <svg viewBox="0 0 64 64"><circle cx="32" cy="34" r="22" fill="none" stroke="var(--ice)" stroke-width="3"/><path d="M32 34V18M32 34l10 6" stroke="var(--red)" stroke-width="3.4" stroke-linecap="round"/><path d="M26 6h12" stroke="var(--ice)" stroke-width="3" stroke-linecap="round"/></svg>
+      <h3>Velocity burst</h3><p>15 payments in ~20 min · 300 shoppers</p></div>
+    <div class="card">
+      <svg viewBox="0 0 64 64"><g fill="none" stroke="var(--red)" stroke-width="3.4" stroke-linecap="round"><rect x="8" y="18" width="34" height="24" rx="4"/><path d="M16 26l10 10M26 26L16 36"/></g><rect x="22" y="26" width="34" height="24" rx="4" fill="var(--card)" stroke="var(--red)" stroke-width="3.4"/><path d="M33 33l12 10M45 33L33 43" stroke="var(--red)" stroke-width="3.4" stroke-linecap="round"/></svg>
+      <h3>Declines</h3><p>Repeated declines, same shopper, same day</p></div>
+  </div>
+
+  <h3 style="margin-top:30px">Top 6 scores in <code>PAYMENT_ANOMALY_SCORES</code></h3>
+  <p class="kicker" style="margin-bottom:12px">All velocity bursts: 13–15 payments in 30 min plus declines.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Payment</th><th>Merchant</th><th>USD</th><th>Txns/30min</th><th>Declines/day</th><th>Score</th><th>Planted?</th></tr></thead>
+    <tbody>
+      <tr><td>1004379</td><td>1024</td><td class="num">169.15</td><td class="num">15</td><td class="num">8</td><td class="num"><b>0.838</b></td><td>yes</td></tr>
+      <tr><td>1004334</td><td>847</td><td class="num">234.84</td><td class="num">15</td><td class="num">6</td><td class="num"><b>0.838</b></td><td>yes</td></tr>
+      <tr><td>1000688</td><td>235</td><td class="num">32.94</td><td class="num">14</td><td class="num">7</td><td class="num"><b>0.837</b></td><td>yes</td></tr>
+      <tr><td>1003027</td><td>1142</td><td class="num">268.65</td><td class="num">13</td><td class="num">7</td><td class="num"><b>0.836</b></td><td>yes</td></tr>
+      <tr><td>1003210</td><td>1697</td><td class="num">34.63</td><td class="num">14</td><td class="num">8</td><td class="num"><b>0.836</b></td><td>yes</td></tr>
+      <tr><td>1000806</td><td>1842</td><td class="num">48.35</td><td class="num">13</td><td class="num">8</td><td class="num"><b>0.836</b></td><td>yes</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 style="margin-top:30px">Riskiest merchant-days in <code>MERCHANT_DAILY_RISK</code></h3>
+  <div class="card bars">
+    <div class="bar"><span>Merchant 1123 · Oct 24</span><div class="track"><div class="fill" style="width:100%;background:linear-gradient(90deg,#fca5a5,#ef4444)"></div></div><b>$17,180</b></div>
+    <div class="bar"><span>Merchant 445 · Nov 3</span><div class="track"><div class="fill" style="width:78.2%;background:linear-gradient(90deg,#fca5a5,#ef4444)"></div></div><b>$13,433</b></div>
+    <div class="bar"><span>Merchant 379 · Nov 19</span><div class="track"><div class="fill" style="width:70.2%;background:linear-gradient(90deg,#fca5a5,#ef4444)"></div></div><b>$12,068</b></div>
+    <div class="bar"><span>Merchant 1151 · Nov 5</span><div class="track"><div class="fill" style="width:66.6%;background:linear-gradient(90deg,#fca5a5,#ef4444)"></div></div><b>$11,444</b></div>
+    <div class="bar"><span>Merchant 957 · Nov 15</span><div class="track"><div class="fill" style="width:62%;background:linear-gradient(90deg,#fca5a5,#ef4444)"></div></div><b>$10,658</b></div>
+    <p style="margin:4px 0 0;font-size:12.5px;color:var(--muted)">Flagged USD. One flagged payment each.</p>
+  </div>
+
+  <h3 style="margin-top:30px">Reference tables</h3>
+  <div class="grid">
+    <div class="card"><h3 style="margin-top:0">Merchants (2,000)</h3>
+      <div class="table-wrap" style="border:0"><table><thead><tr><th>ID</th><th>Vertical</th><th>Home</th><th>Typical USD</th></tr></thead><tbody>
+        <tr><td>1</td><td>Apparel</td><td>US</td><td class="num">108.48</td></tr><tr><td>2</td><td>Electronics</td><td>DE</td><td class="num">144.30</td></tr>
+        <tr><td>3</td><td>Electronics</td><td>GB</td><td class="num">34.27</td></tr><tr><td>4</td><td>Gaming</td><td>CA</td><td class="num">103.90</td></tr></tbody></table></div></div>
+    <div class="card"><h3 style="margin-top:0">FX to USD · Nov 23</h3>
+      <div class="table-wrap" style="border:0"><table><thead><tr><th>Currency</th><th>Rate</th></tr></thead><tbody>
+        <tr><td>AUD</td><td class="num">0.6311</td></tr><tr><td>BRL</td><td class="num">0.1969</td></tr><tr><td>CAD</td><td class="num">0.7047</td></tr>
+        <tr><td>CHF</td><td class="num">1.1049</td></tr><tr><td>EUR</td><td class="num">1.0336</td></tr><tr><td>GBP</td><td class="num">1.2942</td></tr></tbody></table></div></div>
+  </div>
+</section>
+
+<!-- ======================================================== MODEL -->
+<section id="model">
+  <h2><svg viewBox="0 0 34 34"><path d="M3 30 L17 4 L31 30 Z" fill="var(--gold)"/><path d="M17 13v8M17 25v1" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>Model results</h2>
+  <p class="kicker">Isolation Forest · 4 features. Higher contamination: more recall, less precision.</p>
+
+  <div class="grid">
+    <div class="card" style="text-align:center"><svg viewBox="0 0 64 64" style="width:56px;margin:0 auto"><rect x="6" y="40" width="52" height="16" rx="8" fill="var(--ice-2)"/><rect x="6" y="40" width="22" height="16" rx="8" fill="var(--ice)"/></svg><h3>Amount vs usual</h3><p>ln(USD ÷ merchant median)</p></div>
+    <div class="card" style="text-align:center"><svg viewBox="0 0 64 64" style="width:56px;margin:0 auto"><circle cx="22" cy="32" r="14" fill="none" stroke="var(--ice)" stroke-width="4"/><circle cx="42" cy="32" r="14" fill="none" stroke="var(--red)" stroke-width="4"/></svg><h3>Card country mismatch</h3><p>1 if card ≠ shopper country</p></div>
+    <div class="card" style="text-align:center"><svg viewBox="0 0 64 64" style="width:56px;margin:0 auto"><path d="M6 50l10-12 8 6 12-20 8 10 14-22" fill="none" stroke="var(--ice)" stroke-width="4" stroke-linejoin="round"/></svg><h3>30-min velocity</h3><p>Shopper's payments in the last 30 min</p></div>
+    <div class="card" style="text-align:center"><svg viewBox="0 0 64 64" style="width:56px;margin:0 auto"><rect x="10" y="14" width="44" height="40" rx="6" fill="none" stroke="var(--ice)" stroke-width="4"/><path d="M10 26h44" stroke="var(--ice)" stroke-width="4"/><path d="M24 34l14 12M38 34L24 46" stroke="var(--red)" stroke-width="4" stroke-linecap="round"/></svg><h3>Declines today</h3><p>Shopper's declines that day</p></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-tools" role="group" aria-label="Chart views">
+      <button type="button" class="active" data-view="chart" aria-pressed="true">Chart</button>
+      <button type="button" data-view="preview" aria-pressed="false">Preview</button>
+      <button type="button" data-view="info" aria-pressed="false">Info</button>
+    </div>
+    <div class="cc-panel active" data-panel="chart">
+      <svg viewBox="0 0 720 290" role="img" aria-label="Precision and recall at 0.5, 1 and 2 percent flagged" style="width:100%;height:100%">
+        <g font-family="-apple-system, system-ui, sans-serif" font-size="12" fill="currentColor">
+          <g stroke="#94a3b8" stroke-opacity=".35"><line x1="50" y1="30" x2="700" y2="30"/><line x1="50" y1="85" x2="700" y2="85"/><line x1="50" y1="140" x2="700" y2="140"/><line x1="50" y1="195" x2="700" y2="195"/><line x1="50" y1="250" x2="700" y2="250"/></g>
+          <g text-anchor="end" opacity=".7"><text x="42" y="34">1.0</text><text x="42" y="89">0.75</text><text x="42" y="144">0.5</text><text x="42" y="199">0.25</text><text x="42" y="254">0</text></g>
+          <!-- 0.5% -->
+          <rect x="100" y="34.4" width="60" height="215.6" rx="8" fill="#29b5e8"/><text x="130" y="26" text-anchor="middle" font-weight="800">0.98</text>
+          <rect x="168" y="140" width="60" height="110" rx="8" fill="#f5a623"/><text x="198" y="132" text-anchor="middle" font-weight="800">0.50</text>
+          <text x="164" y="272" text-anchor="middle" font-weight="700">0.5% flagged</text>
+          <!-- 1% -->
+          <rect x="320" y="102.6" width="60" height="147.4" rx="8" fill="#29b5e8"/><text x="350" y="94" text-anchor="middle" font-weight="800">0.67</text>
+          <rect x="388" y="98.2" width="60" height="151.8" rx="8" fill="#f5a623"/><text x="418" y="90" text-anchor="middle" font-weight="800">0.69</text>
+          <text x="384" y="272" text-anchor="middle" font-weight="700">1% flagged (default)</text>
+          <!-- 2% -->
+          <rect x="540" y="173" width="60" height="77" rx="8" fill="#29b5e8"/><text x="570" y="165" text-anchor="middle" font-weight="800">0.35</text>
+          <rect x="608" y="89.4" width="60" height="160.6" rx="8" fill="#f5a623"/><text x="638" y="81" text-anchor="middle" font-weight="800">0.73</text>
+          <text x="604" y="272" text-anchor="middle" font-weight="700">2% flagged</text>
+          <!-- legend -->
+          <rect x="520" y="6" width="12" height="12" rx="3" fill="#29b5e8"/><text x="538" y="16">Precision</text>
+          <rect x="610" y="6" width="12" height="12" rx="3" fill="#f5a623"/><text x="628" y="16">Recall</text>
+        </g>
+      </svg>
+    </div>
+    <div class="cc-panel" data-panel="preview">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Share flagged</th><th>Flagged</th><th>Precision</th><th>Recall</th></tr></thead>
+        <tbody>
+          <tr><td>0.5%</td><td class="num">1,654</td><td class="num">0.98</td><td class="num">0.50</td></tr>
+          <tr><td>1% (pipeline default)</td><td class="num">3,339</td><td class="num">0.67</td><td class="num">0.69</td></tr>
+          <tr><td>2%</td><td class="num">6,672</td><td class="num">0.35</td><td class="num">0.73</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="cc-panel cc-info" data-panel="info">
+      <p><strong>What this shows:</strong> precision (share of flags that are planted anomalies) and recall (share of planted anomalies that get flagged) at three contamination rates.</p>
+      <p><strong>Source:</strong> <code>REACH_DS_DEV.PAYMENTS_ANOMALY.PAYMENT_FEATURES</code>, 334,850 payments from the last 30 days, 3,222 of them planted.</p>
+      <p><strong>How it was derived:</strong> scikit-learn IsolationForest (200 trees, random_state=42), fit on a 200k sample and scored on all rows, using the same code as the notebook's experiment cell. Run on 2026-11-23.</p>
+      <p><strong>Caveat:</strong> synthetic data, so the numbers shift slightly if the data is regenerated. Real data has no planted flag to grade against.</p>
+    </div>
+  </div>
+  <p class="kicker" style="margin-top:12px"><b>Discussion:</b> cost of a false alarm vs a missed fraud sets the threshold.</p>
+</section>
+
+<!-- ======================================================== FILES -->
+<section id="files">
+  <h2><svg viewBox="0 0 34 34"><path d="M3 9a2 2 0 012-2h8l3 3h13a2 2 0 012 2v15a2 2 0 01-2 2H5a2 2 0 01-2-2z" fill="var(--ice)"/></svg>Files</h2>
+  <p class="kicker">Workshop repository · Snowflake Workspaces</p>
+  <div class="grid">
+    <div class="card"><span class="tag t-raw">pre-work</span><h3><code>setup/00_account_setup.sql</code></h3><p>Warehouse, databases, managed-access schemas, roles</p></div>
+    <div class="card"><span class="tag t-raw">pre-work</span><h3><code>setup/01_generate_data.sql</code></h3><p>1M payments + planted anomalies</p></div>
+    <div class="card"><span class="tag t-dev">applied</span><h3><code>setup/02_cicd_service_users.sql</code></h3><p>OIDC service users + network policy</p></div>
+    <div class="card"><span class="tag t-dev">parts 1–2</span><h3><code>notebooks/01_explore_and_experiment.ipynb</code></h3><p>Explore · experiment</p></div>
+    <div class="card"><span class="tag t-dev">part 3</span><h3><code>pipeline/deploy.sql</code></h3><p>Procedures + task graph · <code>&lt;% db %&gt;</code> selects DEV/PROD</p></div>
+    <div class="card"><span class="tag t-prod">part 4</span><h3><code>.github/workflows/deploy.yml</code></h3><p>PR → DEV · merge → PROD</p></div>
+    <div class="card"><span class="tag t-raw">guide</span><h3><code>README.md</code> + this page</h3><p>Lab guide · visual guide</p></div>
+  </div>
+</section>
+
+<!-- ======================================================== CI/CD -->
+<section id="cicd">
+  <h2><svg viewBox="0 0 34 34"><circle cx="8" cy="8" r="4" fill="var(--ice)"/><circle cx="8" cy="26" r="4" fill="var(--ice)"/><circle cx="26" cy="17" r="4" fill="var(--green)"/><path d="M8 12v10M12 8c8 0 10 5 10 9" stroke="var(--ice)" stroke-width="2.6" fill="none"/></svg>CI/CD</h2>
+  <p class="kicker">PR validates in DEV. Merge deploys PROD.</p>
+  <div class="card" style="overflow-x:auto">
+    <svg viewBox="0 0 960 170" style="min-width:560px;width:100%" role="img" aria-label="CI/CD: branch, pull request, validate in DEV, merge, deploy to PROD">
+      <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#29b5e8"/></marker></defs>
+      <g font-family="-apple-system, system-ui, sans-serif" text-anchor="middle">
+        <g transform="translate(90 80)"><circle r="44" fill="#e0f2fe" stroke="#29b5e8" stroke-width="3"/><path d="M-10 -18v36M-10 -4c14 0 20-4 20-14" stroke="#11567f" stroke-width="4" fill="none"/><circle cx="-10" cy="-18" r="5" fill="#11567f"/><circle cx="-10" cy="18" r="5" fill="#11567f"/><circle cx="10" cy="-18" r="5" fill="#11567f"/><text y="68" font-weight="700" font-size="13" fill="#11567f">Branch</text></g>
+        <g transform="translate(280 80)"><circle r="44" fill="#e0f2fe" stroke="#29b5e8" stroke-width="3"/><path d="M-14 -16h28v24h-16l-8 8v-8h-4z" fill="#11567f"/><text y="68" font-weight="700" font-size="13" fill="#11567f">Pull request</text></g>
+        <g transform="translate(480 80)"><circle r="44" fill="#dcfce7" stroke="#22c55e" stroke-width="3"/><path d="M-14 0l9 9 19-19" stroke="#16a34a" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text y="68" font-weight="700" font-size="13" fill="#166534">Deploy + run in DEV</text></g>
+        <g transform="translate(680 80)"><circle r="44" fill="#e0f2fe" stroke="#29b5e8" stroke-width="3"/><path d="M-12 -18v36M12 -18c0 18-24 14-24 22" stroke="#11567f" stroke-width="4" fill="none"/><circle cx="-12" cy="18" r="5" fill="#11567f"/><circle cx="12" cy="-18" r="5" fill="#11567f"/><circle cx="-12" cy="-18" r="5" fill="#11567f"/><text y="68" font-weight="700" font-size="13" fill="#11567f">Merge to main</text></g>
+        <g transform="translate(870 80)"><circle r="44" fill="#fee2e2" stroke="#ef4444" stroke-width="3"/><path d="M0 -22c10 8 12 22 4 32h-8c-8-10-6-24 4-32z" fill="#dc2626"/><circle cy="-4" r="4" fill="#fff"/><path d="M-6 14l-6 8M6 14l6 8" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/><text y="68" font-weight="700" font-size="13" fill="#991b1b">Deploy PROD</text></g>
+      </g>
+      <g stroke="#29b5e8" stroke-width="3" marker-end="url(#ar2)"><line x1="138" y1="80" x2="230" y2="80"/><line x1="328" y1="80" x2="430" y2="80"/><line x1="528" y1="80" x2="630" y2="80"/><line x1="728" y1="80" x2="820" y2="80"/></g>
+    </svg>
+  </div>
+  <div class="grid" style="margin-top:14px">
+    <div class="card"><h3 style="margin-top:0">No secrets</h3><p>OIDC: short-lived token per run.</p></div>
+    <div class="card"><h3 style="margin-top:0">One identity per environment</h3><p>GitHub <code>dev</code> / <code>prod</code> → separate service users. Reviewer on <code>prod</code> = approval gate.</p></div>
+    <div class="card"><h3 style="margin-top:0">One file, two targets</h3><p><code>snow sql -f pipeline/deploy.sql -D db=REACH_DS_DEV</code> or <code>db=REACH_DS_PROD</code></p></div>
+  </div>
+
+  <h3 style="margin-top:30px">Login without secrets (OIDC)</h3>
+  <div class="card" style="overflow-x:auto">
+    <svg viewBox="0 0 960 250" style="min-width:560px;width:100%" role="img" aria-label="OIDC: GitHub runner gets a signed token, Snowflake matches issuer and subject to a service user, applies network policy, assumes role">
+      <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#29b5e8"/></marker></defs>
+      <g font-family="-apple-system, system-ui, sans-serif" font-size="12.5">
+        <g transform="translate(20 40)"><rect width="190" height="150" rx="18" fill="#0f172a"/><text x="95" y="30" text-anchor="middle" fill="#fff" font-weight="800" font-size="14">GitHub runner</text>
+          <text x="95" y="58" text-anchor="middle" fill="#cbd5e1">job: deploy-prod</text><text x="95" y="78" text-anchor="middle" fill="#cbd5e1">environment: prod</text>
+          <rect x="25" y="96" width="140" height="36" rx="8" fill="#29b5e8"/><text x="95" y="119" text-anchor="middle" fill="#fff" font-weight="700">id-token: write</text></g>
+        <g transform="translate(270 40)"><rect width="200" height="150" rx="18" fill="#e0f2fe" stroke="#29b5e8" stroke-width="2"/><text x="100" y="30" text-anchor="middle" fill="#0c4a6e" font-weight="800" font-size="14">Signed token</text>
+          <g font-family="ui-monospace, Menlo, monospace" font-size="10.5" fill="#0f2a3d"><text x="14" y="58">iss: token.actions.</text><text x="14" y="72">     githubusercontent.com</text><text x="14" y="94">sub: repo:&lt;org&gt;/</text><text x="14" y="108">     &lt;repo&gt;:</text><text x="14" y="122">     environment:prod</text></g>
+          <text x="100" y="142" text-anchor="middle" fill="#11567f" font-weight="700">valid minutes, not months</text></g>
+        <g transform="translate(530 40)"><rect width="200" height="150" rx="18" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/><text x="100" y="30" text-anchor="middle" fill="#7f1d1d" font-weight="800" font-size="14">Snowflake checks</text>
+          <text x="20" y="62" fill="#7f1d1d">✓ issuer + subject match</text><text x="34" y="80" fill="#991b1b" font-size="10.5">GH_REACH_WORKSHOP_PROD</text>
+          <text x="20" y="108" fill="#7f1d1d">✓ source IP allowed</text><text x="34" y="126" fill="#991b1b" font-size="11.5">GH_ACTIONS_POLICY</text></g>
+        <g transform="translate(790 55)"><circle cx="75" cy="60" r="60" fill="#dcfce7" stroke="#22c55e" stroke-width="3"/><text x="75" y="54" text-anchor="middle" fill="#14532d" font-weight="800" font-size="13">REACH_DS_</text><text x="75" y="70" text-anchor="middle" fill="#14532d" font-weight="800" font-size="13">DEPLOYER</text><text x="75" y="90" text-anchor="middle" fill="#166534" font-size="11">writes PROD</text></g>
+        <g stroke="#29b5e8" stroke-width="3" marker-end="url(#ar3)"><line x1="212" y1="115" x2="266" y2="115"/><line x1="472" y1="115" x2="526" y2="115"/><line x1="732" y1="115" x2="786" y2="115"/></g>
+        <text x="480" y="225" text-anchor="middle" fill="#64748b">A PR job carries <tspan font-weight="700">environment:dev</tspan> → matches only GH_REACH_WORKSHOP_DEV → cannot reach PROD</text>
+      </g>
+    </svg>
+  </div>
+
+  <h3 style="margin-top:30px">Run history · Nov 24</h3>
+  <div class="card" style="overflow-x:auto">
+    <svg viewBox="0 0 960 200" style="min-width:560px;width:100%" role="img" aria-label="Six workflow runs on Nov 24: first push deploy-prod passed; PR 1 failed then passed; merge 1 deployed; PR 2 passed; merge 2 deployed">
+      <g font-family="-apple-system, system-ui, sans-serif" font-size="12" text-anchor="middle">
+        <line x1="60" y1="90" x2="900" y2="90" stroke="#94a3b8" stroke-width="3"/>
+        <g transform="translate(90 90)"><circle r="22" fill="#ef4444"/><path d="M-9 0l6 6 12-12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><text y="-34" font-weight="800" fill="currentColor">push main</text><text y="44" fill="#64748b">deploy-prod</text><text y="60" fill="#64748b">20 s · first PROD</text></g>
+        <g transform="translate(250 90)"><circle r="22" fill="#f59e0b"/><path d="M-7 -7l14 14M7 -7l-14 14" stroke="#fff" stroke-width="4" stroke-linecap="round"/><text y="-34" font-weight="800" fill="currentColor">PR #1</text><text y="44" fill="#64748b">output check failed</text><text y="60" fill="#64748b">IFF type bug</text></g>
+        <g transform="translate(410 90)"><circle r="22" fill="#22c55e"/><path d="M-9 0l6 6 12-12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><text y="-34" font-weight="800" fill="currentColor">PR #1 fix</text><text y="44" fill="#64748b">validate-in-dev</text><text y="60" fill="#64748b">1 m 19 s</text></g>
+        <g transform="translate(570 90)"><circle r="22" fill="#ef4444"/><path d="M-9 0l6 6 12-12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><text y="-34" font-weight="800" fill="currentColor">merge #1</text><text y="44" fill="#64748b">deploy-prod</text><text y="60" fill="#64748b">27 s</text></g>
+        <g transform="translate(730 90)"><circle r="22" fill="#22c55e"/><path d="M-9 0l6 6 12-12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><text y="-34" font-weight="800" fill="currentColor">PR #2</text><text y="44" fill="#64748b">from Snowsight</text><text y="60" fill="#64748b">+ MAX_ANOMALY_SCORE</text></g>
+        <g transform="translate(880 90)"><circle r="22" fill="#ef4444"/><path d="M-9 0l6 6 12-12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><text y="-34" font-weight="800" fill="currentColor">merge #2</text><text y="44" fill="#64748b">deploy-prod</text><text y="60" fill="#64748b">PROD updated</text></g>
+      </g>
+    </svg>
+    <div class="legend" style="margin:4px 8px 6px"><span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#22c55e"/></svg>DEV validation</span><span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#ef4444"/></svg>PROD deploy</span><span><svg width="14" height="14"><circle cx="7" cy="7" r="7" fill="#f59e0b"/></svg>Blocked by CI</span></div>
+  </div>
+</section>
+
+<!-- ======================================================== DOCS -->
+<section id="docs">
+  <h2><svg viewBox="0 0 34 34"><path d="M5 6h10a3 3 0 013 3v20a3 3 0 00-3-3H5zM29 6H19a3 3 0 00-3 3v20a3 3 0 013-3h10z" fill="var(--ice)" opacity=".85"/></svg>Documentation</h2>
+  <div class="chips">
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/ui-snowsight/workspaces"><svg><use href="#link"/></svg>Workspaces</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/ui-snowsight/workspaces-git"><svg><use href="#link"/></svg>Workspaces + Git</a>
+    <a class="chip" href="https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview"><svg><use href="#link"/></svg>Python stored procedures</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/tasks-graphs"><svg><use href="#link"/></svg>Task graphs</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/ui-snowsight-tasks"><svg><use href="#link"/></svg>Task graphs in Snowsight</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/tasks-errors"><svg><use href="#link"/></svg>Task alerts</a>
+    <a class="chip" href="https://docs.snowflake.com/en/developer-guide/cicd"><svg><use href="#link"/></svg>CI/CD</a>
+    <a class="chip" href="https://docs.snowflake.com/en/developer-guide/cicd/github-action"><svg><use href="#link"/></svg>GitHub Actions</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/workload-identity-federation"><svg><use href="#link"/></svg>Workload identity federation</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/network-policies"><svg><use href="#link"/></svg>Network policies</a>
+    <a class="chip" href="https://docs.snowflake.com/en/developer-guide/git/git-setting-up-public"><svg><use href="#link"/></svg>Git integration</a>
+    <a class="chip" href="https://docs.snowflake.com/en/developer-guide/snowflake-cli/sql/execute-sql"><svg><use href="#link"/></svg>snow sql templating</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/security-access-control-considerations"><svg><use href="#link"/></svg>Access control best practices</a>
+    <a class="chip" href="https://docs.snowflake.com/en/developer-guide/builders/devops-with-snowflake"><svg><use href="#link"/></svg>DevOps &amp; DCM Projects</a>
+    <a class="chip" href="https://docs.snowflake.com/en/user-guide/data-engineering/dbt-projects-on-snowflake-ci-cd"><svg><use href="#link"/></svg>dbt Projects CI/CD</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <svg class="spin" style="color:var(--ice)" viewBox="0 0 100 100"><use href="#flake"/></svg>
+  Reach × Snowflake · Animesh Gupta · Dec 1, 2026
+</footer>
+
+<script>
+  // Falling snow with Off / Light / Heavy toggle (choice saved locally; hidden under prefers-reduced-motion via CSS)
+  (function () {
+    var box = document.getElementById('snow');
+    var buttons = document.querySelectorAll('.snow-toggle [data-snow]');
+    function makeSnow(count) {
+      box.textContent = '';
+      for (var i = 0; i < count; i++) {
+        var f = document.createElement('i');
+        var s = 2 + Math.random() * 5;
+        f.style.left = (Math.random() * 100) + 'vw';
+        f.style.width = f.style.height = s + 'px';
+        f.style.opacity = (0.35 + Math.random() * 0.55).toFixed(2);
+        f.style.animationDuration = (9 + Math.random() * 14) + 's';
+        f.style.animationDelay = (-Math.random() * 20) + 's';
+        f.style.setProperty('--drift', ((Math.random() - 0.5) * 120) + 'px');
+        box.appendChild(f);
+      }
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.snow === String(count))); });
+    }
+    var saved = null;
+    try { saved = localStorage.getItem('reachGuideSnow'); } catch (e) {}
+    makeSnow(saved !== null ? parseInt(saved, 10) : 35);
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var n = parseInt(b.dataset.snow, 10);
+        makeSnow(n);
+        try { localStorage.setItem('reachGuideSnow', String(n)); } catch (e) {}
+      });
+    });
+  })();
+
+  document.querySelectorAll('.chart-card').forEach(function (card) {
+    var buttons = card.querySelectorAll('[data-view]');
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        buttons.forEach(function (b) {
+          b.classList.toggle('active', b === button);
+          b.setAttribute('aria-pressed', String(b === button));
+        });
+        card.querySelectorAll('.cc-panel').forEach(function (panel) {
+          panel.classList.toggle('active', panel.dataset.panel === button.dataset.view);
+        });
+      });
+    });
+  });
+</script>
+</body>
+</html>
