@@ -699,16 +699,25 @@
   (function () {
     var box = document.getElementById('snow');
     var buttons = document.querySelectorAll('.snow-toggle [data-snow]');
+    // Embedded in an auto-height iframe the page can be 10x the screen: scale density and fall time to match.
+    var current = 35, lastScale = 0;
+    function getScale() {
+      return Math.max(1, window.innerHeight / Math.max(400, (window.screen && window.screen.availHeight) || 900));
+    }
     function makeSnow(count) {
+      current = count;
+      var scale = lastScale = getScale();
       box.textContent = '';
-      for (var i = 0; i < count; i++) {
+      var total = Math.min(Math.round(count * scale), 1200);
+      for (var i = 0; i < total; i++) {
         var f = document.createElement('i');
         var s = 2 + Math.random() * 5;
         f.style.left = (Math.random() * 100) + 'vw';
         f.style.width = f.style.height = s + 'px';
         f.style.opacity = (0.35 + Math.random() * 0.55).toFixed(2);
-        f.style.animationDuration = (9 + Math.random() * 14) + 's';
-        f.style.animationDelay = (-Math.random() * 20) + 's';
+        var dur = (9 + Math.random() * 14) * scale;
+        f.style.animationDuration = dur + 's';
+        f.style.animationDelay = (-Math.random() * dur) + 's';
         f.style.setProperty('--drift', ((Math.random() - 0.5) * 120) + 'px');
         box.appendChild(f);
       }
@@ -717,6 +726,10 @@
     var saved = null;
     try { saved = localStorage.getItem('reachGuideSnow'); } catch (e) {}
     makeSnow(saved !== null ? parseInt(saved, 10) : 35);
+    // The host iframe grows after first paint; redraw when the height changes materially.
+    window.addEventListener('resize', function () {
+      if (Math.abs(getScale() - lastScale) / lastScale > 0.25) makeSnow(current);
+    });
     buttons.forEach(function (b) {
       b.addEventListener('click', function () {
         var n = parseInt(b.dataset.snow, 10);
